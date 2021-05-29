@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'time'
 
 module Alpaca
   module Trade
@@ -7,7 +8,7 @@ module Alpaca
         attr_reader :time, :open, :high, :low, :close, :volume
 
         def initialize(json)
-          @time = Time.at(json['t'])
+          @time = Time.parse(json['t'])
           @open = BigDecimal(json['o'].to_s)
           @high = BigDecimal(json['h'].to_s)
           @low = BigDecimal(json['l'].to_s)

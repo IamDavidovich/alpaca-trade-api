@@ -9,7 +9,7 @@ module Alpaca
       class Client
         attr_reader :data_endpoint, :endpoint, :key_id, :key_secret
 
-        TIMEFRAMES = ['minute', '1Min', '5Min', '15Min', 'day', '1D']
+        TIMEFRAMES = %w[1Min 1Hour 1Day]
 
         def initialize(endpoint: Alpaca::Trade::Api.configuration.endpoint,
                        key_id: Alpaca::Trade::Api.configuration.key_id,
@@ -44,9 +44,9 @@ module Alpaca
           json.map { |item| Asset.new(item) }
         end
 
-        def bars(timeframe, symbols, limit: 100)
+        def historic_bars(symbol:, from:, to:, timeframe: '1Min', limit: 1000)
           validate_timeframe(timeframe)
-          response = get_request(data_endpoint, "v1/bars/#{timeframe}", symbols: symbols.join(','), limit: limit)
+          response = get_request(data_endpoint, "v2/stocks/#{symbol}/bars?", timeframe: timeframe, limit: limit, start: from, end: to)
           json = JSON.parse(response.body)
           json.keys.each_with_object({}) do |symbol, hash|
             hash[symbol] = json[symbol].map { |bar| Bar.new(bar) }
