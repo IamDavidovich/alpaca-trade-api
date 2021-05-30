@@ -48,9 +48,14 @@ module Alpaca
           validate_timeframe(timeframe)
           response = get_request(data_endpoint, "v2/stocks/#{symbol}/bars?", timeframe: timeframe, limit: limit, start: from, end: to)
           json = JSON.parse(response.body)
-          json.keys.each_with_object({}) do |symbol, hash|
-            hash[symbol] = json[symbol].map { |bar| Bar.new(bar) }
-          end
+
+          puts response.body
+
+          {
+            symbol: json['symbol'],
+            next_page_token: json['next_page_token'],
+            bars: json['bars'].map { |bar| Bar.new(bar) }
+          }
         end
 
         def calendar(start_date: Date.today, end_date: (Date.today + 30))
