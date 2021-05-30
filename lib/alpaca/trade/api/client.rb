@@ -46,16 +46,19 @@ module Alpaca
 
         def historic_bars(symbol:, from:, to:, timeframe: '1Min', limit: 1000)
           validate_timeframe(timeframe)
-          response = get_request(data_endpoint, "v2/stocks/#{symbol}/bars?", timeframe: timeframe, limit: limit, start: from, end: to)
+          response = get_request(
+            data_endpoint,
+            "v2/stocks/#{symbol}/bars?",
+            timeframe: timeframe, limit: limit, start: from, end: to
+          )
+
           json = JSON.parse(response.body)
 
-          puts response.body
+          unless json['next_page_token'].nil?
+            puts 'next_page_token was not blank when fetching historic bars. Probably need to implement pagination.'
+          end
 
-          {
-            symbol: json['symbol'],
-            next_page_token: json['next_page_token'],
-            bars: json['bars'].map { |bar| Bar.new(bar) }
-          }
+          json['bars'].map { |bar| Bar.new(bar) }
         end
 
         def calendar(start_date: Date.today, end_date: (Date.today + 30))
@@ -238,15 +241,9 @@ module Alpaca
         end
 
         def possibly_raise_exception(response)
-          if response.status == 401
-            raise UnauthorizedError, JSON.parse(response.body)['message']
-          end
-          if response.status == 429
-            raise RateLimitedError, JSON.parse(response.body)['message']
-          end
-          if response.status == 500
-            raise InternalServerError, JSON.parse(response.body)['message']
-          end
+          raise UnauthorizedError, JSON.parse(response.body)['message'] if response.status == 401
+          raise RateLimitedError, JSON.parse(response.body)['message'] if response.status == 429
+          raise InternalServerError, JSON.parse(response.body)['message'] if response.status == 500
         end
 
         def validate_timeframe(timeframe)
